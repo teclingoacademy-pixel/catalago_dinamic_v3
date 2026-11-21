@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Catálogo Dinámico | Conceptos AI MX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        body {
+            background-color: #0a0a0c;
+            color: #e5e5e5;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+        }
+        #splash-screen {
+            position: fixed; inset: 0; background-color: #0a0a0c; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+        }
+        #splash-screen.hidden { opacity: 0; visibility: hidden; }
+        .loader-circle {
+            position: relative; width: 120px; height: 120px; border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .loader-circle::before {
+            content: ''; position: absolute; inset: -2px; border-radius: 50%;
+            border: 2px solid transparent; border-top-color: #a855f7; border-bottom-color: #06b6d4;
+            animation: spin 1.2s linear infinite; box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loader-text { text-align: center; font-size: 10px; letter-spacing: 2px; font-weight: 700; color: white; line-height: 1.3; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-text { text-shadow: 0 0 20px rgba(168, 85, 247, 0.5); }
+        .mobile-sheet { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        .mobile-sheet.open { transform: translateY(0); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        body.loaded { overflow-y: auto; }
+        canvas { max-width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* Contenedor relativo para superponer el resaltado */
+        .pdf-page-container { position: relative; margin-bottom: 20px; }
+        /* Recuadro amarillo brillante */
+        .highlight-overlay {
+            position: absolute;
+            background-color: rgba(255, 215, 0, 0.35);
+            border: 2px solid #eab308;
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col">
+
+    <div id="splash-screen">
+        <div class="mb-8 flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-gradient-to-tr from-purple-600 to-cyan-400"></div>
+            <span class="text-xl font-bold tracking-widest text-white">CATÁLOGO DINÁMICO</span>
+        </div>
+        <div class="loader-circle">
+            <div class="loader-text">CONCEPTOS<br>AI MX</div>
+        </div>
+        <p class="mt-8 text-xs text-gray-500 tracking-[0.2em] uppercase">Cargando Interfaz...</p>
+    </div>
+
+    <header class="h-16 md:h-20 flex items-center justify-between px-4 md:px-8 border-b border-white/5 bg-[#0a0a0c]/90 backdrop-blur-md z-20 shrink-0">
+        <div class="flex items-center gap-3 md:gap-4">
+            <div class="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-gradient-to-tr from-purple-600 to-cyan-400 shadow-[0_0_15px_rgba(168,85,247,0.5)] flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-base md:text-lg font-bold tracking-wide text-white leading-tight">Catálogo Dinámico</span>
+                <span class="text-[9px] md:text-[10px] text-purple-400/80 font-medium tracking-wider uppercase">Conceptos AI MX</span>
+            </div>
+        </div>
+        
+        <div class="relative flex-1 mx-4 md:mx-8 max-w-2xl">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg class="w-4 h-4 md:w-5 md:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="text" id="buscador" class="w-full bg-[#151518] border border-white/10 text-white text-sm rounded-full block pl-9 md:pl-12 p-2 md:p-3 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all placeholder-gray-500" placeholder="Buscar código o descripción...">
+        </div>
+
+        <div class="w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#151518] border border-white/10 flex items-center justify-center text-xs md:text-sm font-bold text-purple-400 shrink-0">J</div>
+    </header>
+
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        
+        <aside class="w-full md:w-[400px] flex flex-col bg-[#0d0d10] z-10 overflow-y-auto no-scrollbar pb-24 md:pb-0">
+            
+            <div class="p-4 md:p-6 border-b border-white/5 shrink-0">
+                <div class="flex items-center justify-between mb-1 md:mb-2">
+                    <h2 id="resultado-titulo" class="text-xl md:text-2xl font-bold text-white tracking-tight glow-text">Esperando Búsqueda...</h2>
+                    <span id="resultado-catalogo" class="bg-purple-500/10 text-purple-400 text-[10px] md:text-xs px-2 py-1 rounded-full border border-purple-500/20">---</span>
+                </div>
+                <p id="resultado-descripcion" class="text-sm text-gray-400 mb-4">Ingresa un código para empezar</p>
+                
+                <div class="flex items-center justify-between bg-[#151518] rounded-lg p-2 border border-white/5">
+                    <button class="p-1.5 hover:text-white text-gray-500 transition-colors bg-white/5 rounded-md"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <span id="resultado-paginacion" class="text-xs text-gray-400 font-medium">Coincidencia <strong class="text-white">0</strong> de <strong class="text-white">0</strong></span>
+                    <button class="p-1.5 hover:text-white text-gray-500 transition-colors bg-white/5 rounded-md"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6 space-y-4 md:space-y-6">
+                
+                <div class="glass-panel rounded-xl p-4 md:p-5 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
+                    <h3 class="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Precio de Referencia
+                    </h3>
+                    <div class="flex items-end gap-2 mb-1">
+                        <span id="precio-valor" class="text-2xl md:text-3xl font-bold text-white">$---<span class="text-sm text-gray-500">.00</span></span>
+                        <span id="precio-moneda" class="text-xs text-gray-400 mb-1">MXN</span>
+                    </div>
+                    <p id="precio-autor" class="text-[10px] md:text-xs text-gray-500 mb-3">Sin precio registrado</p>
+                    
+                    <div id="form-precio" class="hidden flex gap-2 mt-2">
+                        <input type="number" id="input-precio" class="w-full bg-[#151518] border border-white/10 rounded-lg p-2 text-sm text-white" placeholder="Ej. 450">
+                        <button onclick="guardarPrecioBackend()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-2 rounded-lg text-sm font-medium">Guardar</button>
+                    </div>
+                    <button id="btn-actualizar-precio" onclick="mostrarFormPrecio()" class="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-colors text-white">Actualizar</button>
+                </div>
+
+                <div class="glass-panel rounded-xl p-4 md:p-5 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+                    <h3 class="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Notas
+                    </h3>
+                    
+                    <textarea id="input-nota" class="w-full bg-[#151518] border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors mb-3 resize-none" rows="2" placeholder="Escribe una compatibilidad..."></textarea>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                        <select id="select-confianza" class="bg-[#151518] border border-white/10 text-[10px] md:text-xs text-gray-300 rounded-md p-1.5 md:p-2 focus:outline-none w-full md:w-auto mb-2 md:mb-0">
+                            <option value="ALTA">Confianza Alta</option>
+                            <option value="MEDIA">Confianza Media</option>
+                            <option value="BAJA">Solo Prueba</option>
+                        </select>
+                        <button onclick="guardarNotaBackend()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs md:text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(168,85,247,0.4)] w-full md:w-auto">Guardar</button>
+                    </div>
+
+                    <div id="contenedor-notas" class="mt-4 space-y-2 border-t border-white/5 pt-3">
+                        <!-- Las notas se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="hidden md:flex flex-1 relative bg-[#000000] flex-col">
+            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 glass-panel rounded-full px-4 py-2 flex items-center gap-4 text-gray-400 text-sm">
+                <span id="pdf-pagina-actual" class="text-white font-medium">Página ---</span>
+            </div>
+            <div class="flex-1 flex items-center justify-center p-8 overflow-hidden relative bg-[#1a1a1a]">
+                <!-- Contenedor del PDF Real -->
+                <div id="pdf-container-desktop" class="w-full max-w-4xl h-full overflow-y-auto flex flex-col items-center gap-4 py-8">
+                    <p class="text-gray-500 text-sm">Busca un código para cargar el PDF</p>
+                </div>
+                <div class="absolute bottom-0 w-3/4 h-1/2 bg-purple-900/20 blur-[100px] pointer-events-none"></div>
+            </div>
+        </section>
+    </main>
+
+    <button onclick="toggleSheet()" class="md:hidden fixed bottom-6 right-6 z-30 bg-purple-600 hover:bg-purple-500 text-white rounded-full p-4 shadow-[0_0_20px_rgba(168,85,247,0.6)] flex items-center justify-center transition-transform active:scale-95">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <span class="ml-2 font-semibold text-sm">Ver Catálogo</span>
+    </button>
+
+    <div id="pdfSheet" class="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300" onclick="toggleSheet()">
+        <div id="pdfSheetContent" class="mobile-sheet absolute bottom-0 w-full h-[85vh] bg-[#0d0d10] rounded-t-2xl border-t border-white/10 flex flex-col" onclick="event.stopPropagation()">
+            <div class="w-full flex justify-center pt-3 pb-1" onclick="toggleSheet()">
+                <div class="w-12 h-1.5 bg-gray-600 rounded-full"></div>
+            </div>
+            <div class="flex justify-between items-center px-4 py-2 border-b border-white/5">
+                <span class="text-white font-medium text-sm">Visor PDF - Página <span id="pdf-pagina-movil">---</span></span>
+                <button onclick="toggleSheet()" class="text-gray-400 hover:text-white p-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div id="pdf-container-movil" class="flex-1 bg-[#1a1a1a] p-2 overflow-y-auto flex flex-col items-center">
+                <p class="text-gray-500 text-xs mt-10">Busca un código para cargar el PDF</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================================
+        // CONFIGURACIÓN
+        // ========================================================
+        const API_URL = "https://script.google.com/macros/s/AKfycbzOjgnUuJSo7N0lcO3k9MIjh0XuTgGFYvoUEnr-W7bQItEqbzuRVejUy1FR451RamJX/exec";
+        
+        let codigoActual = "";
+        let pdfDoc = null;
+
+        // Configurar el worker de PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // --- Splash Screen ---
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.classList.add('hidden');
+                document.body.classList.add('loaded');
+                cargarPDFInicial(); 
+            }, 2000);
+        });
+
+        // --- Bottom Sheet (Móvil) ---
+        function toggleSheet() {
+            const sheet = document.getElementById('pdfSheet');
+            const content = document.getElementById('pdfSheetContent');
+            
+            if (sheet.classList.contains('hidden')) {
+                sheet.classList.remove('hidden');
+                setTimeout(() => {
+                    sheet.classList.remove('opacity-0');
+                    content.classList.add('open');
+                }, 10);
+            } else {
+                sheet.classList.add('opacity-0');
+                content.classList.remove('open');
+                setTimeout(() => { sheet.classList.add('hidden'); }, 300);
+            }
+        }
+
+        function mostrarFormPrecio() {
+            document.getElementById('btn-actualizar-precio').classList.add('hidden');
+            document.getElementById('form-precio').classList.remove('hidden');
+            document.getElementById('form-precio').classList.add('flex');
+        }
+
+        // --- Lógica de Conexión con el Backend ---
+        async function fetchAPI(payload) {
+            try {
+                const formData = new FormData();
+                for (const key in payload) {
+                    formData.append(key, payload[key]);
+                }
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                return await response.json();
+            } catch (error) {
+                console.error("Error en fetchAPI:", error);
+                return { success: false, error: error.toString() };
+            }
+        }
+
+        // --- LÓGICA DEL VISOR DE PDF (PDF.js + Proxy Público + Resaltado) ---
+        async function cargarPDF(urlDrive, paginaDestino, coordenadasJSON = null) {
+            let fileId = "";
+            if (urlDrive.includes("/file/d/")) {
+                fileId = urlDrive.split("/file/d/")[1].split("/")[0];
+            } else if (urlDrive.includes("id=")) {
+                fileId = urlDrive.split("id=")[1].split("&")[0];
+            } else {
+                fileId = urlDrive;
+            }
+
+            // Usamos el proxy público para evitar CORS
+            const urlProxy = `/api/proxy?id=${fileId}`;
+            
+            document.getElementById('pdf-container-desktop').innerHTML = '<p class="text-gray-400 text-sm animate-pulse">Cargando PDF...</p>';
+            document.getElementById('pdf-container-movil').innerHTML = '<p class="text-gray-400 text-xs animate-pulse mt-10">Cargando PDF...</p>';
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(urlProxy);
+                pdfDoc = await loadingTask.promise;
+                
+                // Renderizar en Desktop
+                await renderizarPagina(paginaDestino, 'pdf-container-desktop', 'desktop', coordenadasJSON);
+                
+                // Renderizar en Móvil
+                await renderizarPagina(paginaDestino, 'pdf-container-movil', 'movil', coordenadasJSON);
+
+                document.getElementById('pdf-pagina-actual').innerText = `Página ${paginaDestino} de ${pdfDoc.numPages}`;
+                document.getElementById('pdf-pagina-movil').innerText = `${paginaDestino} de ${pdfDoc.numPages}`;
+
+            } catch (error) {
+                console.error("Error al cargar PDF:", error);
+                document.getElementById('pdf-container-desktop').innerHTML = '<p class="text-red-400 text-sm">Error al cargar el PDF. El proxy podría estar ocupado, intenta de nuevo.</p>';
+                document.getElementById('pdf-container-movil').innerHTML = '<p class="text-red-400 text-xs mt-10">Error al cargar el PDF.</p>';
+            }
+        }
+
+        async function renderizarPagina(numPagina, contenedorId, tipo, coordenadasJSON) {
+            if (!pdfDoc) return;
+            
+            const page = await pdfDoc.getPage(numPagina);
+            const viewport = page.getViewport({ scale: tipo === 'desktop' ? 1.3 : 0.8 });
+            
+            const container = document.createElement('div');
+            container.className = 'pdf-page-container';
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            canvas.className = "rounded-lg";
+            
+            container.appendChild(canvas);
+
+            // Lógica del resaltado amarillo
+            if (coordenadasJSON) {
+                try {
+                    const coords = typeof coordenadasJSON === 'string' ? JSON.parse(coordenadasJSON) : coordenadasJSON;
+                    
+                    if (coords.x !== undefined && coords.y !== undefined && coords.w !== undefined && coords.h !== undefined) {
+                        const highlight = document.createElement('div');
+                        highlight.className = 'highlight-overlay';
+                        
+                        // Ajustamos las coordenadas al tamaño real del PDF en pantalla
+                        highlight.style.left = `${coords.x * (viewport.width / 1000)}px`; 
+                        highlight.style.top = `${coords.y * (viewport.height / 1000)}px`;
+                        highlight.style.width = `${coords.w * (viewport.width / 1000)}px`;
+                        highlight.style.height = `${coords.h * (viewport.height / 1000)}px`;
+                        
+                        container.appendChild(highlight);
+                    }
+                } catch (e) {
+                    console.warn("Coordenadas inválidas:", e);
+                }
+            }
+
+            const contenedor = document.getElementById(contenedorId);
+            contenedor.innerHTML = '';
+            contenedor.appendChild(container);
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            
+            await page.render(renderContext).promise;
+        }
+
+        // --- Carga Inicial ---
+        async function cargarPDFInicial() {
+            const urlCatalogoInicial = "https://drive.google.com/file/d/1Dn_O0-V2UwTOWg1hgkBUjdgxG2_ctHl-/view";
+            await cargarPDF(urlCatalogoInicial, 1);
+        }
+
+        // --- LÓGICA DE BÚSQUEDA ---
+        async function ejecutarBusqueda(query) {
+            if (!query.trim()) return;
+            
+            document.getElementById('resultado-titulo').innerText = "Buscando...";
+            
+            const res = await fetchAPI({ action: "buscar", query: query });
+            
+            if (res && res.success && res.data && res.data.partes && res.data.partes.length > 0) {
+                const data = res.data;
+                const parte = data.partes[0];
+                codigoActual = parte.codigo;
+
+                document.getElementById('resultado-titulo').innerText = parte.codigo;
+                document.getElementById('resultado-descripcion').innerText = parte.descripcion || "Sin descripción";
+                document.getElementById('resultado-paginacion').innerHTML = `Coincidencia <strong class="text-white">1</strong> de <strong class="text-white">${data.partes.length}</strong>`;
+                document.getElementById('resultado-catalogo').innerText = "GRUPO MEJOR"; 
+                
+                if (parte.url_pdf) {
+                    // Aquí pasamos las coordenadas de la base de datos al visor
+                    await cargarPDF(parte.url_pdf, parseInt(parte.pagina) || 1, parte.coordenadas);
+                } else {
+                    document.getElementById('pdf-container-desktop').innerHTML = '<p class="text-yellow-400 text-sm">No hay PDF asociado a esta pieza.</p>';
+                }
+
+                if (data.precios && data.precios.length > 0) {
+                    const p = data.precios[0];
+                    document.getElementById('precio-valor').innerHTML = `$${p.precio}<span class="text-sm text-gray-500">.00</span>`;
+                    document.getElementById('precio-moneda').innerText = p.moneda;
+                    document.getElementById('precio-autor').innerText = `Actualizado por ${p.autor} el ${new Date(p.fecha).toLocaleDateString()}`;
+                } else {
+                    document.getElementById('precio-valor').innerHTML = `$---<span class="text-sm text-gray-500">.00</span>`;
+                    document.getElementById('precio-autor').innerText = "Sin precio registrado";
+                }
+                
+                document.getElementById('btn-actualizar-precio').classList.remove('hidden');
+                document.getElementById('form-precio').classList.add('hidden');
+                document.getElementById('form-precio').classList.remove('flex');
+
+                const contenedorNotas = document.getElementById('contenedor-notas');
+                contenedorNotas.innerHTML = '';
+                
+                if (data.notas && data.notas.length > 0) {
+                    data.notas.forEach(n => {
+                        const notaHTML = `
+                            <div class="bg-[#151518]/50 p-3 rounded-lg border border-white/5">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] md:text-xs font-semibold text-purple-300">${n.autor}</span>
+                                    <span class="text-[9px] md:text-[10px] text-gray-500">${new Date(n.fecha).toLocaleDateString()}</span>
+                                </div>
+                                <p class="text-xs md:text-sm text-gray-300">${n.nota}</p>
+                            </div>
+                        `;
+                        contenedorNotas.innerHTML += notaHTML;
+                    });
+                } else {
+                    contenedorNotas.innerHTML = `<p class="text-xs text-gray-500 text-center py-2">No hay notas guardadas.</p>`;
+                }
+
+            } else {
+                document.getElementById('resultado-titulo').innerText = "Sin resultados";
+                document.getElementById('resultado-descripcion').innerText = "Intenta con otro código.";
+                document.getElementById('resultado-catalogo').innerText = "---";
+                document.getElementById('resultado-paginacion').innerHTML = `Coincidencia <strong class="text-white">0</strong> de <strong class="text-white">0</strong>`;
+                document.getElementById('contenedor-notas').innerHTML = '';
+                document.getElementById('pdf-container-desktop').innerHTML = '<p class="text-gray-500 text-sm">No se encontró el PDF.</p>';
+            }
+        }
+
+        async function guardarNotaBackend() {
+            if (!codigoActual) return alert("Primero busca una pieza.");
+            
+            const nota = document.getElementById('input-nota').value;
+            const confianza = document.getElementById('select-confianza').value;
+            
+            if (!nota.trim()) return alert("Escribe una nota primero.");
+
+            const res = await fetchAPI({
+                action: "guardarNota",
+                codigoA: codigoActual,
+                codigoB: "", 
+                tipo: "COMPATIBILIDAD",
+                autor: "Usuario Local",
+                confianza: confianza,
+                nota: nota
+            });
+
+            if (res && res.success) {
+                document.getElementById('input-nota').value = '';
+                ejecutarBusqueda(codigoActual); 
+            } else {
+                alert("Error al guardar la nota.");
+            }
+        }
+
+        async function guardarPrecioBackend() {
+            if (!codigoActual) return alert("Primero busca una pieza.");
+            
+            const precio = document.getElementById('input-precio').value;
+            if (!precio) return alert("Ingresa un precio válido.");
+
+            const res = await fetchAPI({
+                action: "guardarPrecio",
+                codigo: codigoActual,
+                precio: parseFloat(precio),
+                moneda: "MXN",
+                autor: "Usuario Local"
+            });
+
+            if (res && res.success) {
+                document.getElementById('input-precio').value = '';
+                ejecutarBusqueda(codigoActual); 
+            } else {
+                alert("Error al guardar el precio.");
+            }
+        }
+
+        // Evento para el buscador
+        document.getElementById('buscador').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                ejecutarBusqueda(this.value);
+            }
+        });
+    </script>
+</body>
+</html>

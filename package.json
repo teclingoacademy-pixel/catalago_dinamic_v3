@@ -1,0 +1,6 @@
+{
+  "name": "catalogo-dinamico",
+  "version": "1.0.0",
+  "description": "Catálogo Dinámico con Proxy",
+  "type": "module"
+}
