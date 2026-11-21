@@ -50,12 +50,13 @@
         /* Recuadro amarillo brillante */
         .highlight-overlay {
             position: absolute;
-            background-color: rgba(255, 215, 0, 0.35);
-            border: 2px solid #eab308;
-            border-radius: 4px;
-            box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+            background-color: rgba(255, 215, 0, 0.5); /* Más opaco */
+            border: 3px solid #eab308;
+            border-radius: 6px;
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.8);
             pointer-events: none;
-            z-index: 10;
+            z-index: 9999; /* Aseguramos que esté por encima de todo */
+            transition: all 0.3s ease;
         }
     </style>
 </head>
@@ -308,25 +309,36 @@
             
             container.appendChild(canvas);
 
-            // Lógica del resaltado amarillo
+            // --- LÓGICA DEL RESALTADO AMARILLO ---
             if (coordenadasJSON) {
                 try {
-                    const coords = typeof coordenadasJSON === 'string' ? JSON.parse(coordenadasJSON) : coordenadasJSON;
+                    // 1. Limpiamos el string (por si trae comillas extra o caracteres raros)
+                    let cleanJSON = coordenadasJSON;
+                    if (typeof cleanJSON === 'string') {
+                        cleanJSON = cleanJSON.replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
+                    }
                     
-                    if (coords.x !== undefined && coords.y !== undefined && coords.w !== undefined && coords.h !== undefined) {
+                    // 2. Parseamos
+                    const coords = typeof cleanJSON === 'string' ? JSON.parse(cleanJSON) : cleanJSON;
+                    console.log("Coordenadas parseadas:", coords);
+
+                    if (coords && coords.x !== undefined && coords.y !== undefined && coords.w !== undefined && coords.h !== undefined) {
                         const highlight = document.createElement('div');
                         highlight.className = 'highlight-overlay';
                         
-                        // Ajustamos las coordenadas al tamaño real del PDF en pantalla
-                        highlight.style.left = `${coords.x * (viewport.width / 1000)}px`; 
-                        highlight.style.top = `${coords.y * (viewport.height / 1000)}px`;
-                        highlight.style.width = `${coords.w * (viewport.width / 1000)}px`;
-                        highlight.style.height = `${coords.h * (viewport.height / 1000)}px`;
+                        // 3. Calculamos las proporciones
+                        const scaleX = viewport.width / 1000;
+                        const scaleY = viewport.height / 1000;
+
+                        highlight.style.left = `${coords.x * scaleX}px`; 
+                        highlight.style.top = `${coords.y * scaleY}px`;
+                        highlight.style.width = `${coords.w * scaleX}px`;
+                        highlight.style.height = `${coords.h * scaleY}px`;
                         
                         container.appendChild(highlight);
                     }
                 } catch (e) {
-                    console.warn("Coordenadas inválidas:", e);
+                    console.error("Error al procesar coordenadas. Valor recibido:", coordenadasJSON, e);
                 }
             }
 
