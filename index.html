@@ -265,7 +265,7 @@
                 fileId = urlDrive;
             }
 
-            // Usamos el proxy público para evitar CORS
+            // Usamos el proxy de Vercel para evitar CORS
             const urlProxy = `/api/proxy?id=${fileId}`;
             
             document.getElementById('pdf-container-desktop').innerHTML = '<p class="text-gray-400 text-sm animate-pulse">Cargando PDF...</p>';
